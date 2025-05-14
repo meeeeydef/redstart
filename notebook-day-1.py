@@ -781,9 +781,9 @@ def _(FuncAnimation, draw_booster_scene, mo, np, plt):
 
         anim = FuncAnimation(fig, animate, frames=frames, interval=1000 / fps)
 
-        # Génération HTML en mémoire
-        html = anim.to_jshtml()  # ✅ convertit l'animation en HTML+JS
-        plt.close(fig)  # évite les doubles affichages
+    
+        html = anim.to_jshtml()  
+        plt.close(fig)  
         return mo.html(html)
 
     make_booster_animation()
