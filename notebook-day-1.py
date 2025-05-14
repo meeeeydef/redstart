@@ -140,7 +140,7 @@ def _(np):
             [np.cos(alpha), -np.sin(alpha)], 
             [np.sin(alpha),  np.cos(alpha)]
         ])
-    return
+    return (R,)
 
 
 @app.cell(hide_code=True)
@@ -213,6 +213,14 @@ def _(mo):
     return
 
 
+@app.cell
+def _():
+    g=1
+    M=1
+    l=1
+    return M, g, l
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -222,6 +230,49 @@ def _(mo):
     Compute the force $(f_x, f_y) \in \mathbb{R}^2$ applied to the booster by the reactor.
     """
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    The reactor force has a magnitude \( f \) and makes an angle \( \phi \) with respect to the booster axis.  
+    The booster axis makes an angle \( \theta \) with the vertical.
+    """
+    )
+    return
+
+
+@app.cell
+def _(np):
+    def compute_reactor_force_components(f, theta, phi):
+        fx = -f * np.sin(theta +phi)
+        fy = f * np.cos(theta+phi)
+
+        return fx, fy
+    return (compute_reactor_force_components,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""Function using the rotation matrix""")
+    return
+
+
+@app.cell
+def _(R, f, np):
+    def force_reacteur(theta, phi):
+        # Force dans le repère du booster (dirigée vers le bas)
+        F_booster = np.array([0, -f])
+    
+        # Application de la rotation pour l'angle phi
+        F_booster_rotated = R(phi) @ F_booster
+    
+        # Application de la rotation pour l'angle theta
+        F_global = R(theta) @ F_booster_rotated
+    
+        return F_global[0], F_global[1]
     return
 
 
@@ -241,11 +292,68 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    These equations are obtained by applying Newton's second law to the system.  
+    For the horizontal motion (\(x\)), the acceleration is proportional to the horizontal component of the reactor force.  
+    This component depends on the angle of the booster (\( \theta \)) and the angle of the force relative to the booster axis (\( \phi \)).  
+    For the vertical motion (\(y\)), the acceleration results from the difference between the vertical component of the reactor force and the gravitational force.
+    """
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r""" """)
+    return
+
+
+@app.cell
+def _(M, compute_reactor_force_components, g, phi):
+    def force_gravite():
+        return 0, -M * g
+    def equations_mouvement(t, y):
+        x, x_dot, y, y_dot, theta = y
+    
+        # Forces
+        fx_r, fy_r = compute_reactor_force_components(theta, phi)
+        fx_g, fy_g = force_gravite()
+    
+        # Somme des forces
+        fx_total = fx_r + fx_g
+        fy_total = fy_r + fy_g
+    
+        # Accélérations linéaires
+        x_ddot = fx_total / M
+        y_ddot = fy_total / M
+    
+    
+        return [x_dot, x_ddot, y_dot, y_ddot]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 Moment of inertia
 
     Compute the moment of inertia $J$ of the booster and define the corresponding Python variable `J`.
     """
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""The booster is modeled as a uniform rod of length 2l, with total mass M, and rotation about its center""")
+    return
+
+
+@app.cell
+def _(M, l):
+    J = (1/3) * M * l**2
+    print(f"Moment of inertia J = {J:.3f} kg·m²")
+
     return
 
 
@@ -370,6 +478,11 @@ def _(mo):
     As an intermediary step, you can begin with production of image snapshots of the booster location (every 1 sec).
     """
     )
+    return
+
+
+@app.cell
+def _():
     return
 
 
