@@ -1649,6 +1649,46 @@ def _(mo):
     return
 
 
+@app.cell
+def _(X0, g, l, np, plt, solve_ivp):
+
+    k32= -2/3
+    k42 = -1
+
+
+    A_1 = np.array([
+        [0, 1, 0, 0],
+        [0, 0, -g*(1 - k32), g*k42],
+        [0, 0, 0, 1],
+        [0, 0, (3*g/l)*k32, (3*g/l)*k42]
+    ])
+
+
+    def closed_loop_dynamics(t, X):
+        return A_1 @ X
+
+    X0_1 = np.array([0, 0, 0.1, 0])
+
+
+    t_span1 = (0, 10)
+    t_eval1 = np.linspace(t_span1[0], t_span1[1], 500)
+
+    # Solve ODE
+    sol2 = solve_ivp(closed_loop_dynamics, t_span1, X0, t_eval=t_eval1)
+
+    # Plot results
+    plt.figure(figsize=(10, 6))
+    plt.plot(sol2.t, sol2.y[2], label='Delta theta (rad)')
+    plt.plot(sol2.t, sol2.y[3], label='Delta theta dot (rad/s)')
+    plt.xlabel('Time (s)')
+    plt.ylabel('States')
+    plt.title('Closed-loop response with manual tuning k3 = -2/3, k4 = -1')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -1696,16 +1736,14 @@ def _(A_red, B_red, np):
     from scipy.signal import place_poles
 
 
-    # Desired closed-loop poles for ~20 sec settling time
     desired_poles = np.array([-1, -2, -3, -4])
 
-    # Compute gain matrix K_pp
     place_obj = place_poles(A_red, B_red, desired_poles)
     K_pp = place_obj.gain_matrix
 
     print("State feedback gain K_pp:")
     print(K_pp)
-    return
+    return (K_pp,)
 
 
 @app.cell(hide_code=True)
@@ -1722,6 +1760,17 @@ def _(mo):
     return
 
 
+@app.cell
+def _(A_red, B_red, np):
+    from scipy.linalg import solve_continuous_are
+    Q = np.diag([1, 0.1, 100, 10])  
+    R1 = np.array([[1]])
+    P = solve_continuous_are(A_red, B_red, Q, R1)
+    K_oc = np.linalg.inv(R1) @ B_red.T @ P
+    print("K_oc =", K_oc)
+    return (K_oc,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -1731,6 +1780,49 @@ def _(mo):
     Test the two control strategies (pole placement and optimal control) on the "true" (nonlinear) model and check that they achieve their goal. Otherwise, go back to the drawing board and tweak the design parameters until they do!
     """
     )
+    return
+
+
+@app.cell
+def _(A_red, B_red, K_oc, K_pp, np, plt):
+
+    from scipy.integrate import solve_ivp
+
+    K_manual = np.array([0, 0, -2/3, -1])
+    A_cl_manual = A_red - B_red @ K_manual.reshape(1, -1)
+    A_cl_pp = A_red - B_red @ K_pp.reshape(1, -1)
+    A_cl_oc = A_red - B_red @ K_oc.reshape(1, -1)
+
+    X0 = np.array([0, 0, 0.1, 0])
+
+    t_span = (0, 10)
+    t_eval = np.linspace(*t_span, 500)
+
+    def simulate_response(A_cl, X0, t_span, t_eval):
+        def dyn(t, x):
+            return A_cl @ x
+        sol = solve_ivp(dyn, t_span, X0, t_eval=t_eval)
+        return sol
+
+    sol_manual = simulate_response(A_cl_manual, X0, t_span, t_eval)
+    sol_pp = simulate_response(A_cl_pp, X0, t_span, t_eval)
+    sol_oc = simulate_response(A_cl_oc, X0, t_span, t_eval)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(sol_manual.t, sol_manual.y[2], label='Manual tuning')
+    plt.plot(sol_pp.t, sol_pp.y[2], label='Pole placement')
+    plt.plot(sol_oc.t, sol_oc.y[2], label='Optimal (LQR)')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Angle $\Delta \\theta$ (rad)')
+    plt.title('Closed-loop response comparison')
+    plt.legend()
+    plt.grid()
+    plt.show()
+    return X0, solve_ivp
+
+
+@app.cell
+def _():
     return
 
 
