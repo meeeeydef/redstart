@@ -963,72 +963,83 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+     System Equations
+
     $M\ddot{x} = -f \sin(\theta + \phi)$
-
     $M\ddot{y} = +f \cos(\theta + \phi) - Mg$
+    $J\ddot{\theta} = -\ell(\sin \phi)f$
 
-    $J\ddot{\theta} = -\ell(\sin\phi)f$
+     Assumptions
+    - $|\theta| < \pi/2$
+    - $|\phi| < \pi/2$
+    - $f > 0$
 
-    Constraints
+     Finding Equilibrium Points
 
-    $|\theta| < \pi/2$
-    $|\phi| < \pi/2$
-    $f > 0$
+    At equilibrium, all accelerations are zero:
+    $\ddot{x} = \ddot{y} = \ddot{\theta} = 0$
 
-    Finding Equilibria
-    For a system to be in equilibrium, all accelerations must be zero:
+     From the equation $J\ddot{\theta} = -\ell(\sin \phi)f$
 
-    $\ddot{x} = 0$
-    $\ddot{y} = 0$
-    $\ddot{\theta} = 0$
+    If $\ddot{\theta} = 0$, then:
+    $-\ell(\sin \phi)f = 0$
 
+    Given that $f > 0$ and $\ell \neq 0$, we deduce:
+    $\sin \phi = 0$
 
-    Analyze the angular acceleration equation
-    From equation 3:
-    $\ddot{\theta} = 0 \implies -\ell(\sin\phi)f = 0$
-    Since $f > 0$ and $\ell$ is presumably non-zero, we must have:
-    $\sin\phi = 0$
-    Given that $|\phi| < \pi/2$, the only solution is:
+    Since $|\phi| < \pi/2$, the only solution is:
     $\phi = 0$
 
+     From the equation $M\ddot{x} = -f \sin(\theta + \phi)$
 
-    Substitute into the linear acceleration equations
-    With $\phi = 0$:
-    From equation 1:
-    $\ddot{x} = 0 \implies -f \sin(\theta) = 0$
-    Since $f > 0$, we must have:
-    $\sin\theta = 0$
-    Given that $|\theta| < \pi/2$, the only solution is:
+    If $\ddot{x} = 0$, then:
+    $-f \sin(\theta + \phi) = 0$
+
+    Substituting $\phi = 0$:
+    $-f \sin(\theta) = 0$
+
+    Given that $f > 0$, we deduce:
+    $\sin \theta = 0$
+
+    Since $|\theta| < \pi/2$, the only solution is:
     $\theta = 0$
-    From equation 2:
-    $\ddot{y} = 0 \implies f \cos(\theta) - Mg = 0$
-    Substituting $\theta = 0$ and $\cos(0) = 1$:
+
+     From the equation $M\ddot{y} = +f \cos(\theta + \phi) - Mg$
+
+    If $\ddot{y} = 0$, then:
+    $f \cos(\theta + \phi) - Mg = 0$
+
+    Substituting $\theta = 0$ and $\phi = 0$:
+    $f \cos(0) - Mg = 0$
     $f - Mg = 0$
-    $f = Mg$
-    Equilibrium Solution
 
-    The system has a single equilibrium point where:
-
-    $\phi = 0$
-
-    $\theta = 0$
-
+    We deduce:
     $f = Mg$
 
-    This represents a balanced state where the applied force exactly counteracts gravity, keeping the system in vertical equilibrium.
-    """
-    )
-    return
+     Regarding positions $x$ and $y$
 
+    The differential equations of the system determine accelerations, but not directly positions.
 
-@app.cell
-def _(mo):
-    mo.md(
-        r"""
-    $\dot{x} = \dot{y} = \dot{\theta} = 0$
+    At equilibrium, we have:
+    - $\ddot{x} = 0$ → $x$ has constant velocity
+    - $\ddot{y} = 0$ → $y$ has constant velocity
 
-    x=0, y=l
+    For true equilibrium, velocities must also be zero:
+    - $\dot{x} = 0$ → $x$ is constant
+    - $\dot{y} = 0$ → $y$ is constant
 
+    However, the specific values of $x$ and $y$ can be arbitrary.
+
+     Conclusion:
+
+    The system has an equilibrium point characterized by:
+    - $\phi = 0$ (angle $\phi$ is zero)
+    - $\theta = 0$ (angle $\theta$ is zero)
+    - $f = Mg$ (applied force exactly balances weight)
+    - $x = \text{constant}$ (any horizontal position)
+    - $y = \text{constant}$ (any vertical position)
+
+    Therefore, there are infinitely many equilibrium positions in space (for different values of $x$ and $y$), but all with the same angles ($\phi = 0$ and $\theta = 0$) and the same applied force ($f = Mg$).
     """
     )
     return
@@ -1418,7 +1429,7 @@ def _(np):
     A_red, B_red, C_matrix, is_controllable = reduced_matrices_and_controllability(1.0, 1.0)
     print(f"Controllability matrix rank: {C_matrix.shape[0]} expected, got {np.linalg.matrix_rank(C_matrix)}")
     print(f"Controllability? {is_controllable}")
-    return
+    return A_red, B_red
 
 
 @app.cell(hide_code=True)
@@ -1456,41 +1467,50 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    We begin with the equation of motion in the vertical direction:
+    We begin with the equation of motion in the horizontal direction:
 
     \[
-    \ddot{y} = \frac{f \cos(\theta + \phi)}{M} - g
+    \ddot{x} = \frac{f \sin (\theta + \phi)}{M} 
     \]
 
-    Assuming: \( f = Mg \), this simplifies to:
-
-    \[
-    \ddot{y} = g \cos(\theta + \phi) - g
-    \]
 
     If we assume small angles for \( \theta \) 
 
     Then:
 
     \[
-    \cos(\theta) \approx 1 - \frac{1}{2} \theta^2
-    \Rightarrow \ddot{y} \approx g(1 - \frac{1}{2} \theta^2) - g = -\frac{g}{2} \theta^2
+    \sin(\theta) \approx   \theta
+    \Rightarrow \ddot{x} \approx g  \theta  
     \]
 
-    So even after linearizing, the vertical acceleration is nonlinear in \( \theta \).  
-    To stay within a fully linear model, we ignore the nonlinear term \( \theta^2 \), resulting in:
+    So even after linearizing, the horizontal acceleration is linear in \( \theta \).  
 
-    \[
-    \ddot{y} \approx 0
-    \]
 
     This means vertical motion is governed only by gravity (free fall):
 
-    \[
-    \ddot{y} = -g
-    \Rightarrow y(t) = y(0) + \dot{y}(0)t - \frac{1}{2}gt^2
-    \]
 
+    $x(t) = x(0) - \frac{1}{2}g \theta t^2$
+
+    Since $\theta = \frac{\pi}{4}$
+
+    $x(t)=-g \frac{\pi}{8} t^2$
+ 
+
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    - θ(t) stays constant (no torque, no change in angle).  
+    - x(t) is a parabola due to free-fall acceleration under gravity.
+
+    Interpretation
+    - With no input (ϕ(t) = 0), the system undergoes pure vertical fall.  
+    - Tilt remains at 45° due to zero angular acceleration.  
 
     """
     )
@@ -1500,45 +1520,33 @@ def _(mo):
 @app.cell
 def _(g, np, plt):
     theta0 = np.pi/4  
-    t = np.linspace(0, 2, 200)
-
-
-    y = -0.5 * g * t**2
+    t = np.linspace(0, 2, 500)
     theta = np.full_like(t, theta0)
 
-    # Plotting
-    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
 
-    axs[0].plot(t, y, label="y(t)")
-    axs[0].set_title("Vertical Position y(t)")
-    axs[0].set_xlabel("Time (s)")
-    axs[0].set_ylabel("y (m)")
-    axs[0].grid(True)
+    x = - (g * np.pi / 8) * t**2
+    plt.figure(figsize=(12, 6))
+    # θ(t)
+    plt.subplot(1, 2, 1)
+    plt.plot(t, theta, 'r', label=r'$\theta(t)$')
+    plt.xlabel('Time (s)')
+    plt.ylabel('θ (rad)')
+    plt.title('θ(t)')
+    plt.grid()
+    plt.legend()
 
-    axs[1].plot(t, theta, label="θ(t)", color="orange")
-    axs[1].set_title("Tilt Angle θ(t)")
-    axs[1].set_xlabel("Time (s)")
-    axs[1].set_ylabel("θ (rad)")
-    axs[1].grid(True)
+
+    # x(t)
+    plt.subplot(1, 2, 2)
+    plt.plot(t, x, 'g', label=r'$x(t)$')
+    plt.xlabel('Time (s)')
+    plt.ylabel('x (m)')
+    plt.title('Side motion x(t)')
+    plt.grid()
+    plt.legend()
 
     plt.tight_layout()
     plt.show()
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(
-        r"""
-    - θ(t) stays constant (no torque, no change in angle).  
-    - y(t) is a parabola due to free-fall acceleration under gravity.
-
-    Interpretation
-    - With no input (ϕ(t) = 0), the system undergoes pure vertical fall.  
-    - Tilt remains at 45° due to zero angular acceleration.  
-
-    """
-    )
     return
 
 
@@ -1591,6 +1599,60 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    We want to design a state feedback controller for the reduced system
+
+    \[
+    \dot{X}{red} = A{red} X_{red} + B_{red} \Delta \phi,
+    \]
+
+    with control law
+
+    \[
+    \Delta \phi(t) = - k_3 \Delta \theta - k_4 \Delta \dot{\theta},
+    \]
+
+    $$
+    \dot{X}_{\text{red}} =
+    \begin{bmatrix}
+    0 & 1 & 0 & 0 \\
+    0 & 0 & -g(1-k_3) & gk_4 \\
+    0 & 0 & 0 & 1 \\
+    0 & 0 & \frac{3g}{\ell}k_3 & \frac{3g}{\ell}k_4
+    \end{bmatrix}
+    \cdot
+    \begin{bmatrix}
+    \Delta x \\
+    \Delta \dot{x} \\
+    \Delta \theta \\
+    \Delta \dot{\theta}
+    \end{bmatrix}
+    $$
+
+    We note the matrix with dimension 4x4 as $\tilde{A}$
+
+    det($\lambda$I-$\tilde{A}$) = $\lambda^2$.($\lambda^2$-3$\lambda$$k_4$ -3$k_3$)
+
+    We have double pole -1 and -2 
+
+    ($\lambda$+2).($\lambda$+1) = $\lambda^2$ + 3$\lambda$ +2 = $\lambda^2$-3$\lambda$$k_4$ -3$k_3$
+
+    We conclude that k_4 = -1  and  k_3 = -$\frac{2}{3}$
+     Convergence Rate Analysis
+
+    If we want $\Delta \theta(t)$ to converge to zero in approximately 20 seconds, then the eigenvalue $\lambda$ of $A - BK$ must satisfy:
+
+    $$\mathrm{Re}(\lambda) \lesssim -\frac{3}{T_c} = -\frac{3}{20} = -0.15$$
+
+    This coefficient $-0.15$ represents a lower bound on the exponential decay rate. The more negative the real part, the faster the convergence.
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 Controller Tuned with Pole Assignment
 
     Using pole assignement, find a matrix
@@ -1626,6 +1688,23 @@ def _(mo):
     Explain how you find the proper design parameters!
     """
     )
+    return
+
+
+@app.cell
+def _(A_red, B_red, np):
+    from scipy.signal import place_poles
+
+
+    # Desired closed-loop poles for ~20 sec settling time
+    desired_poles = np.array([-1, -2, -3, -4])
+
+    # Compute gain matrix K_pp
+    place_obj = place_poles(A_red, B_red, desired_poles)
+    K_pp = place_obj.gain_matrix
+
+    print("State feedback gain K_pp:")
+    print(K_pp)
     return
 
 
