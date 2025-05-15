@@ -982,7 +982,6 @@ def _(mo):
     $\ddot{y} = 0$
     $\ddot{\theta} = 0$
 
-    Step 1: 
 
     Analyze the angular acceleration equation
     From equation 3:
@@ -992,7 +991,6 @@ def _(mo):
     Given that $|\phi| < \pi/2$, the only solution is:
     $\phi = 0$
 
-    Step 2: 
 
     Substitute into the linear acceleration equations
     With $\phi = 0$:
@@ -1023,6 +1021,19 @@ def _(mo):
     return
 
 
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    $\dot{x} = \dot{y} = \dot{\theta} = 0$
+
+    x=0, y=l
+
+    """
+    )
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -1040,9 +1051,6 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    # Linearization of Dynamics Around Hovering Equilibrium
-
-    ## Step 1: Error Variables Definition
     As defined:
     - *Equilibrium state*: $(x = x_0, y = y_0, \theta = 0)$
     - *Equilibrium input*: $(f = Mg, \phi = 0)$
@@ -1054,14 +1062,11 @@ def _(mo):
     - $\Delta f = f - Mg$
     - $\Delta \phi = \phi$ (since $\phi = 0$ at equilibrium)
 
-    ## Step 2: Linearizing the Nonlinear Equations
-
     Original nonlinear equations:
     1. $M\ddot{x} = -f \sin(\theta + \phi)$
     2. $M\ddot{y} = +f \cos(\theta + \phi) - Mg$
     3. $J\ddot{\theta} = -\ell(\sin\phi)f$
 
-    ### Linearization Process
 
     For small angles $\theta$ and $\phi$:
     - $\sin(\theta + \phi) \approx \theta + \phi$
@@ -1090,8 +1095,6 @@ def _(mo):
 
     Ignoring higher-order terms:
     $J\Delta\ddot{\theta} \approx -\ell Mg \Delta\phi$
-
-    ## Step 3: Linearized Differential Equations
 
     The linearized system can be written as:
 
@@ -1122,15 +1125,13 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    To express the linearized model in *state-space standard form, we first define the **state vector* and *input vector*, and then express the linearized equations in the form:
+    We express the linearized equations in the form:
 
     \[
     \dot{X} = A X + B U
     \]
 
-    ---
-
-    Let the *state vector* be:
+    Let the state vector be:
 
     \[
     X = \begin{bmatrix}
@@ -1144,7 +1145,7 @@ def _(mo):
     \in \mathbb{R}^6
     \]
 
-    And the *input vector* be:
+    And the input vector be:
 
     \[
     U = \begin{bmatrix}
@@ -1153,8 +1154,6 @@ def _(mo):
     \end{bmatrix}
     \in \mathbb{R}^2
     \]
-
-    ---
 
 
     We rewrite the second-order equations as a first-order system:
@@ -1170,9 +1169,7 @@ def _(mo):
     \end{aligned}
     \]
 
-    ---
-
-    We now identify the matrices *A* and *B* such that:
+    We identify the matrices A and B such that:
 
     \[
     \dot{X} = A X + B U
@@ -1184,12 +1181,12 @@ def _(mo):
     return
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _(M, g, l, np):
 
     B = np.array([
         [0,     0],
-        [0,     g],
+        [0,     -g],
         [0,     0],
         [1/M,   0],
         [0,     0],
@@ -1197,15 +1194,13 @@ app._unparsable_cell(
     ])
     A = np.array([
         [0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, g, 0],
+        [0, 0, 0, 0, - g, 0],
         [0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, , 0],
+        [0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 1],
         [0, 0, 0, 0, 0, 0]
     ])
-    """,
-    name="_"
-)
+    return A, B
 
 
 @app.cell(hide_code=True)
@@ -1237,7 +1232,7 @@ def _(mo):
     \[
     A = \begin{bmatrix}
     0 & 1 & 0 & 0 & 0 & 0 \\
-    0 & 0 & 0 & 0 & g & 0 \\
+    0 & 0 & 0 & 0 & -g & 0 \\
     0 & 0 & 0 & 1 & 0 & 0 \\
     0 & 0 & 0 & 0 & 0 & 0 \\
     0 & 0 & 0 & 0 & 0 & 1 \\
@@ -1286,9 +1281,26 @@ def _(mo):
 
     Hence, all states become reachable through input influence.
 
-     *Conclusion: The linearized model is **controllable*.
+    > *Conclusion: The linearized model is **controllable*.
     """
     )
+    return
+
+
+@app.cell
+def _(A, B, np):
+    # Construction de la matrice de contrôlabilité
+    C = B
+    for i in range(1, 6):
+        C = np.hstack((C, np.linalg.matrix_power(A, i) @ B))
+
+    # Calcul du rang
+    rang_C = np.linalg.matrix_rank(C)
+
+    # Affichage
+    print("Matrice de contrôlabilité C :")
+    print(C)
+    print("\nRang de C :", rang_C)
     return
 
 
@@ -1311,10 +1323,220 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    We focus on the lateral dynamics and tilt, ignoring vertical motion \( y \) and \( \dot{y} \), and fix the thrust amplitude \( f = Mg \). The only control input is now the tilt angle of the force, \( \phi \).
+
+
+    We define the reduced state vector and input
+
+    \[
+    X_{red} = \begin{bmatrix}
+    \Delta x \\
+    \Delta \dot{x} \\
+    \Delta \theta \\
+    \Delta \dot{\theta}
+    \end{bmatrix}, \quad
+    U_{red} = \Delta \phi
+    \]
+
+
+    We write the reduced linearized equations
+
+    From the full linearized model:
+
+    \[
+    \begin{cases}
+    \dot{\Delta x} = \Delta \dot{x} \\
+    \dot{\Delta \dot{x}} = g(\Delta \theta + \Delta \phi) \\
+    \dot{\Delta \theta} = \Delta \dot{\theta} \\
+    \dot{\Delta \dot{\theta}} = -\frac{3g}{\ell} \Delta \phi
+    \end{cases}
+    \]
+
+    Expressed in matrix form:
+
+    \[
+    \dot{X}{red} = A{red} X_{red} + B_{red} U_{red}
+    \]
+
+    where
+
+    \[
+    A_{red} =
+    \begin{bmatrix}
+    0 & 1 & 0 & 0 \\
+    0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0
+    \end{bmatrix}
+    \quad , \quad
+    B_{red} =
+    \begin{bmatrix}
+    0 \\
+    -g \\
+    0 \\
+    -\frac{3g}{\ell}
+    \end{bmatrix}
+    \]
+
+    """
+    )
+    return
+
+
+@app.cell
+def _(np):
+    from numpy.linalg import matrix_rank
+
+    def reduced_matrices_and_controllability(g, l):
+        A_red = np.array([
+            [0, 1, 0, 0],
+            [0, 0, -g, 0],
+            [0, 0, 0, 1],
+            [0, 0, 0, 0]
+        ])
+
+        B_red = np.array([
+            [0],
+            [-g],
+            [0],
+            [-3*g/l]
+        ])
+     # Controllability matrix
+        controllability_matrix = np.hstack([
+            B_red,
+            A_red @ B_red,
+            A_red @ A_red @ B_red,
+            A_red @ A_red @ A_red @ B_red
+        ])
+
+        rank = matrix_rank(controllability_matrix)
+        controllable = (rank == A_red.shape[0])
+
+        return A_red, B_red, controllability_matrix, controllable
+
+
+    A_red, B_red, C_matrix, is_controllable = reduced_matrices_and_controllability(1.0, 1.0)
+    print(f"Controllability matrix rank: {C_matrix.shape[0]} expected, got {np.linalg.matrix_rank(C_matrix)}")
+    print(f"Controllability? {is_controllable}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 Linear Model in Free Fall
 
     Make graphs of $y(t)$ and $\theta(t)$ for the linearized model when $\phi(t)=0$,
     $x(0)=0$, $\dot{x}(0)=0$, $\theta(0) = 45 / 180  \times \pi$  and $\dot{\theta}(0) =0$. What do you see? How do you explain it?
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    Since \( \phi(t) = 0 \), the input vector is zero:
+    U(t) = 0
+
+    The system reduces to homogeneous equations:
+
+    \[
+    \dot{X} = A X
+    \]
+
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    We begin with the equation of motion in the vertical direction:
+
+    \[
+    \ddot{y} = \frac{f \cos(\theta + \phi)}{M} - g
+    \]
+
+    Assuming: \( f = Mg \), this simplifies to:
+
+    \[
+    \ddot{y} = g \cos(\theta + \phi) - g
+    \]
+
+    If we assume small angles for \( \theta \) 
+
+    Then:
+
+    \[
+    \cos(\theta) \approx 1 - \frac{1}{2} \theta^2
+    \Rightarrow \ddot{y} \approx g(1 - \frac{1}{2} \theta^2) - g = -\frac{g}{2} \theta^2
+    \]
+
+    So even after linearizing, the vertical acceleration is nonlinear in \( \theta \).  
+    To stay within a fully linear model, we ignore the nonlinear term \( \theta^2 \), resulting in:
+
+    \[
+    \ddot{y} \approx 0
+    \]
+
+    This means vertical motion is governed only by gravity (free fall):
+
+    \[
+    \ddot{y} = -g
+    \Rightarrow y(t) = y(0) + \dot{y}(0)t - \frac{1}{2}gt^2
+    \]
+
+
+    """
+    )
+    return
+
+
+@app.cell
+def _(g, np, plt):
+    theta0 = np.pi/4  
+    t = np.linspace(0, 2, 200)
+
+
+    y = -0.5 * g * t**2
+    theta = np.full_like(t, theta0)
+
+    # Plotting
+    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+
+    axs[0].plot(t, y, label="y(t)")
+    axs[0].set_title("Vertical Position y(t)")
+    axs[0].set_xlabel("Time (s)")
+    axs[0].set_ylabel("y (m)")
+    axs[0].grid(True)
+
+    axs[1].plot(t, theta, label="θ(t)", color="orange")
+    axs[1].set_title("Tilt Angle θ(t)")
+    axs[1].set_xlabel("Time (s)")
+    axs[1].set_ylabel("θ (rad)")
+    axs[1].grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    - θ(t) stays constant (no torque, no change in angle).  
+    - y(t) is a parabola due to free-fall acceleration under gravity.
+
+    Interpretation
+    - With no input (ϕ(t) = 0), the system undergoes pure vertical fall.  
+    - Tilt remains at 45° due to zero angular acceleration.  
+
     """
     )
     return
