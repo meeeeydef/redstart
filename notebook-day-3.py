@@ -1685,9 +1685,171 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+     Interprétation géométrique du vecteur \( h \in \mathbb{R}^2 \)
+
+
+
+    On nous donne :
+
+    \[
+    h = 
+    \begin{bmatrix}
+    x - \dfrac{\ell}{3} \sin(\theta) \\
+    y + \dfrac{\ell}{3} \cos(\theta)
+    \end{bmatrix}
+    \]
+
+    où :
+     \( (x, y) \) est la position du *centre de masse* du booster,
+    \( \theta \) est l’angle entre le booster et la verticale (positif en rotation antihoraire),
+     \( \ell \) est la *demi-longueur* du booster (car la longueur totale est \( 2\ell = 2 \)).
+
+    ---
+    On cherche à déterminer la position du *point situé en bas du booster, c'est-à-dire **le point d'application de la poussée* (là où le réacteur est fixé), dans le repère global.
+
+    Le *vecteur unitaire orientant le booster* vers le bas est :
+
+    \[
+    \vec{u}_\theta = 
+    \begin{bmatrix}
+    \sin(\theta) \\
+    -\cos(\theta)
+    \end{bmatrix}
+    \]
+
+    Le point situé à une distance \( \ell/3 \) en bas du centre de masse est donc donné par :
+
+    \[
+    h = 
+    \begin{bmatrix}
+    x \\
+    y
+    \end{bmatrix}
+    +
+    \left(-\dfrac{\ell}{3}\right)
+    \begin{bmatrix}
+    \sin(\theta) \\
+    -\cos(\theta)
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    x - \dfrac{\ell}{3} \sin(\theta) \\
+    y + \dfrac{\ell}{3} \cos(\theta)
+    \end{bmatrix}
+    \]
+
+    ---
+
+
+
+    Le vecteur \( h \) représente la position du *pied du booster dans le repère global* :  
+    c’est le *point d’application de la poussée* du réacteur, situé à une distance \( \ell/3 \) sous le centre de masse du booster, dans la direction de son axe.
+    """
+    )
+    return
+
+
+@app.cell
+def _(l, np, plt):
+    theta = np.pi / 6  
+    x_cm, y_cm = 2, 3  
+
+    h_x = x_cm + (l / 3) * np.sin(theta)
+    h_y = y_cm - (l / 3) * np.cos(theta)
+
+
+    u_x = np.sin(theta)
+    u_y = -np.cos(theta)
+    top_x = x_cm + l * u_x
+    top_y = y_cm + l * u_y
+    bottom_x = x_cm - l * u_x
+    bottom_y = y_cm - l * u_y
+
+
+    fig, ax = plt.subplots()
+    ax.plot([bottom_x, top_x], [bottom_y, top_y], 'k-', lw=3, label='Booster')
+    ax.plot(x_cm, y_cm, 'bo', label='Centre de masse (x, y)')
+    ax.plot(h_x, h_y, 'ro', label='Point h (pied du booster)')
+
+
+    ax.text(x_cm + 0.1, y_cm, 'Centre de masse', fontsize=9)
+    ax.text(h_x + 0.1, h_y, 'h', fontsize=9)
+
+
+    ax.set_aspect('equal')
+    ax.grid(True)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_title('Point h sous le centre de masse (correct)')
+    ax.legend()
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 First and Second-Order Derivatives
 
     Compute $\dot{h}$ as a function of $\dot{x}$, $\dot{y}$, $\theta$ and $\dot{\theta}$ (and constants) and then $\ddot{h}$ as a function of $\theta$ and $z$ (and constants) when the auxiliary system is plugged in the booster.
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    First derivative of h
+
+    $$
+    \dot{h} =
+    \begin{bmatrix}
+    \dot{x} - \dfrac{\ell}{3} \cos\theta \cdot \dot{\theta} \\
+    \dot{y} + \dfrac{\ell}{3} \sin\theta \cdot \dot{\theta}
+    \end{bmatrix}
+    $$
+
+    Second derivative of h 
+
+    $$
+    \ddot{h} =
+    \begin{bmatrix}
+    \ddot{x} + \dfrac{\ell}{3} \sin\theta \cdot \dot{\theta}^2 - \dfrac{\ell}{3} \cos\theta \cdot \ddot{\theta} \\
+    \ddot{y} - \dfrac{\ell}{3} \cos\theta \cdot \dot{\theta}^2 - \dfrac{\ell}{3} \sin\theta \cdot \ddot{\theta}
+    \end{bmatrix}
+    $$
+
+    We consider that
+
+    $$ 
+    \ddot{x}=\frac{f_x}{M} 
+    $$
+
+     and 
+ 
+    $$
+     \ddot{y}=\frac{f_y}{M}-g
+    $$
+
+    We elaborate $f_x$ and $f_y$ then we remplace in $\ddot{h}$'s expression
+
+    We obtain 
+
+    $$ 
+    \ddot{h} = \frac{z}{M}
+    \begin{bmatrix}
+    -\sin\theta \\
+    \cos\theta
+    \end{bmatrix}
+    - (\frac{lv_2}{3z}+\frac{l}{z}\ddot{\theta})
+    \begin{bmatrix}
+    \cos\theta \\
+    \sin\theta
+    \end{bmatrix}
+    $$
     """
     )
     return
@@ -1702,6 +1864,11 @@ def _(mo):
     Compute the third derivative $h^{(3)}$ of $h$ as a function of $\theta$ and $z$ (and constants) and then the fourth derivative $h^{(4)}$ of $h$ with respect to time as a function of $\theta$, $\dot{\theta}$, $z$, $\dot{z}$, $v$ (and constants) when the auxiliary system is on.
     """
     )
+    return
+
+
+@app.cell
+def _():
     return
 
 
