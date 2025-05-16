@@ -1994,6 +1994,29 @@ def _(mo):
     return
 
 
+@app.cell
+def _(M, g, l, np):
+    def T(x, dx, y, dy, theta, dtheta, z, dz):
+
+        h_x = x - (l / 3) * np.sin(theta)
+        h_y = y + (l / 3) * np.cos(theta)
+
+
+        dh_x = dx - (l / 3) * np.cos(theta) * dtheta
+        dh_y = dy - (l / 3) * np.sin(theta) * dtheta
+
+
+        d2h_x = (1 / M) * np.sin(theta) * z
+        d2h_y = (1 / M) * (-np.cos(theta) * z - M * g)
+
+
+        d3h_x = (1 / M) * (np.cos(theta) * dtheta * z + np.sin(theta) * dz)
+        d3h_y = (1 / M) * (np.sin(theta) * dtheta * z - np.cos(theta) * dz)
+
+        return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -2006,6 +2029,66 @@ def _(mo):
     Implement the corresponding function `T_inv`.
     """
     )
+    return
+
+
+@app.cell
+def _(M, g, l, np):
+    def T_inv(h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y):
+        if abs(d2h_x) < 1e-10:
+            if d2h_y > 0:
+                theta = 0  
+            else:
+                theta = np.pi  
+        else:
+            theta = np.atan2(d2h_x, d2h_y)
+        
+
+        if abs(np.sin(theta)) > 1e-10:
+            z = M * d2h_x / np.sin(theta)
+        else:
+            z = M * d2h_y / (-np.cos(theta)) + g
+    
+        if z >= 0:
+      
+            theta = (theta + np.pi) % (2 * np.pi)
+            if abs(np.sin(theta)) > 1e-10:
+                z = M * d2h_x / np.sin(theta)
+            else:
+                z = M * d2h_y / (-np.cos(theta)) + g
+
+        dtheta_numerator = M * (np.sin(theta) * d3h_x + np.cos(theta) * d3h_y)
+        dtheta_denominator = z * np.sin(2*theta)
+
+        if abs(dtheta_denominator) > 1e-10:
+            dtheta = dtheta_numerator / dtheta_denominator
+        else:
+            if abs(np.cos(theta)) > 1e-10:
+                dtheta = M * d3h_y / (np.sin(theta) * z)
+            elif abs(np.sin(theta)) > 1e-10:
+                dtheta = M * d3h_x / (np.cos(theta) * z)
+            else:
+                dtheta = 0  
+    
+
+        if abs(np.sin(theta)) > 1e-10:
+            dz = M * (d3h_x - np.cos(theta) * dtheta * z) / np.sin(theta)
+        else:
+            dz = -M * (d3h_y - np.sin(theta) * dtheta * z) / np.cos(theta)
+    
+        x = h_x + (l/3) * np.sin(theta)
+        y = h_y - (l/3) * np.cos(theta)
+    
+        dx = dh_x + (l/3) * np.cos(theta) * dtheta
+        dy = dh_y + (l/3) * np.sin(theta) * dtheta
+    
+        return x, dx, y, dy, theta, dtheta, z, dz
+    return (T_inv,)
+
+
+@app.cell
+def _(T_inv):
+    print(T_inv(0, 1, 2, 3, 4, 5, 6, 7))
     return
 
 
@@ -2044,6 +2127,84 @@ def _(mo):
     that returns a function `fun` such that `fun(t)` is a value of `x, dx, y, dy, theta, dtheta, z, dz, f, phi` at time `t` that match the initial and final values provided as arguments to `compute`.
     """
     )
+    return
+
+
+@app.cell
+def _(M, ell, math):
+    def compute(
+        x_0,
+        dx_0,
+        y_0,
+        dy_0,
+        theta_0,
+        dtheta_0,
+        z_0,
+        dz_0,
+        x_tf,
+        dx_tf,
+        y_tf,
+        dy_tf,
+        theta_tf,
+        dtheta_tf,
+        z_tf,
+        dz_tf,
+        tf,
+    ):   
+        # Calculate coefficients for x
+        a_x = (2*(x_0 - x_tf) + tf*(dx_0 + dx_tf))/(tf**3)
+        b_x = (3*(x_tf - x_0) - tf*(2*dx_0 + dx_tf))/(tf**2)
+        c_x = dx_0
+        d_x = x_0
+    
+        # Calculate coefficients for y
+        a_y = (2*(y_0 - y_tf) + tf*(dy_0 + dy_tf))/(tf**3)
+        b_y = (3*(y_tf - y_0) - tf*(2*dy_0 + dy_tf))/(tf**2)
+        c_y = dy_0
+        d_y = y_0
+    
+        # Calculate coefficients for theta
+        a_theta = (2*(theta_0 - theta_tf) + tf*(dtheta_0 + dtheta_tf))/(tf**3)
+        b_theta = (3*(theta_tf - theta_0) - tf*(2*dtheta_0 + dtheta_tf))/(tf**2)
+        c_theta = dtheta_0
+        d_theta = theta_0
+    
+        # Calculate coefficients for z
+        a_z = (2*(z_0 - z_tf) + tf*(dz_0 + dz_tf))/(tf**3)
+        b_z = (3*(z_tf - z_0) - tf*(2*dz_0 + dz_tf))/(tf**2)
+        c_z = dz_0
+        d_z = z_0
+    
+        def fun(t):
+
+            t = max(0, min(t, tf))
+        
+            x = a_x * t**3 + b_x * t**2 + c_x * t + d_x
+            y = a_y * t**3 + b_y * t**2 + c_y * t + d_y
+            theta = a_theta * t**3 + b_theta * t**2 + c_theta * t + d_theta
+            z = a_z * t**3 + b_z * t**2 + c_z * t + d_z
+        
+            dx = 3 * a_x * t**2 + 2 * b_x * t + c_x
+            dy = 3 * a_y * t**2 + 2 * b_y * t + c_y
+            dtheta = 3 * a_theta * t**2 + 2 * b_theta * t + c_theta
+            dz = 3 * a_z * t**2 + 2 * b_z * t + c_z
+        
+
+        
+            term1 = z - M * ell * dtheta**2 / 3
+            term2 = M * ell * dz**2 / (3 * z) if z != 0 else 0
+        
+            rot_angle = theta - math.pi/2
+            f_x = term1 * math.cos(rot_angle) - term2 * math.sin(rot_angle)
+            f_y = term1 * math.sin(rot_angle) + term2 * math.cos(rot_angle)
+        
+            f = math.sqrt(f_x**2 + f_y**2)
+        
+            phi = math.atan2(f_y, f_x)
+        
+            return x, dx, y, dy, theta, dtheta, z, dz, f, phi
+        
+        return fun
     return
 
 
