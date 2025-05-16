@@ -1869,12 +1869,17 @@ def _(mo):
     $$
     \ddot{h} = 
     \begin{bmatrix}
-    \frac{z}{m} \sin\theta \\
+    \frac{-z}{m} \sin\theta \\
     \frac{z}{m}\cos\theta -g
     \end{bmatrix}
     $$
     """
     )
+    return
+
+
+@app.cell
+def _():
     return
 
 
@@ -1974,6 +1979,86 @@ def _(mo):
     """
     )
     return
+
+
+@app.function
+def compute(
+    x_0,
+    dx_0,
+    y_0,
+    dy_0,
+    theta_0,
+    dtheta_0,
+    z_0,
+    dz_0,
+    x_tf,
+    dx_tf,
+    y_tf,
+    dy_tf,
+    theta_tf,
+    dtheta_tf,
+    z_tf,
+    dz_tf,
+    tf,
+):
+
+    
+    # For each state variable, we'll use a cubic polynomial for interpolation
+    # For a cubic polynomial: a*t^3 + b*t^2 + c*t + d
+    # We have constraints:
+    # - At t=0: position=initial position, velocity=initial velocity
+    # - At t=tf: position=final position, velocity=final velocity
+    
+    # Calculate coefficients for x
+    a_x = (2*(x_0 - x_tf) + tf*(dx_0 + dx_tf))/(tf**3)
+    b_x = (3*(x_tf - x_0) - tf*(2*dx_0 + dx_tf))/(tf**2)
+    c_x = dx_0
+    d_x = x_0
+    
+    # Calculate coefficients for y
+    a_y = (2*(y_0 - y_tf) + tf*(dy_0 + dy_tf))/(tf**3)
+    b_y = (3*(y_tf - y_0) - tf*(2*dy_0 + dy_tf))/(tf**2)
+    c_y = dy_0
+    d_y = y_0
+    
+    # Calculate coefficients for theta
+    a_theta = (2*(theta_0 - theta_tf) + tf*(dtheta_0 + dtheta_tf))/(tf**3)
+    b_theta = (3*(theta_tf - theta_0) - tf*(2*dtheta_0 + dtheta_tf))/(tf**2)
+    c_theta = dtheta_0
+    d_theta = theta_0
+    
+    # Calculate coefficients for z
+    a_z = (2*(z_0 - z_tf) + tf*(dz_0 + dz_tf))/(tf**3)
+    b_z = (3*(z_tf - z_0) - tf*(2*dz_0 + dz_tf))/(tf**2)
+    c_z = dz_0
+    d_z = z_0
+    
+    def fun(t):
+
+        
+        # Ensure t is clamped between 0 and tf
+        t = max(0, min(t, tf))
+        
+        # Calculate positions using cubic polynomials
+        x = a_x * t**3 + b_x * t**2 + c_x * t + d_x
+        y = a_y * t**3 + b_y * t**2 + c_y * t + d_y
+        theta = a_theta * t**3 + b_theta * t**2 + c_theta * t + d_theta
+        z = a_z * t**3 + b_z * t**2 + c_z * t + d_z
+        
+        # Calculate velocities (derivatives of positions)
+        dx = 3 * a_x * t**2 + 2 * b_x * t + c_x
+        dy = 3 * a_y * t**2 + 2 * b_y * t + c_y
+        dtheta = 3 * a_theta * t**2 + 2 * b_theta * t + c_theta
+        dz = 3 * a_z * t**2 + 2 * b_z * t + c_z
+        
+        # For simplicity, setting force and phi to 0
+        # These could be calculated based on the physics of the system if needed
+        f = 0.0
+        phi = 0.0
+        
+        return x, dx, y, dy, theta, dtheta, z, dz, f, phi
+    
+    return fun
 
 
 @app.cell(hide_code=True)
