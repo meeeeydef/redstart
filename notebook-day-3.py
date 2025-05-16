@@ -1959,6 +1959,35 @@ def _(mo):
     return
 
 
+@app.cell
+def _():
+    import math
+
+    def T(x, dx, y, dy, theta, dtheta, z, dz):
+        h_x = x * math.cos(theta) - y * math.sin(theta)
+        h_y = x * math.sin(theta) + y * math.cos(theta)
+        dh_x = dx * math.cos(theta) - dy * math.sin(theta) - (x * math.sin(theta) + y * math.cos(theta)) * dtheta
+        dh_y = dx * math.sin(theta) + dy * math.cos(theta) + (x * math.cos(theta) - y * math.sin(theta)) * dtheta
+
+        d2h_x = -dtheta * (dx * math.sin(theta) + dy * math.cos(theta)) - \
+                dtheta * (dx * math.sin(theta) + dy * math.cos(theta)) - \
+                dtheta**2 * (x * math.cos(theta) - y * math.sin(theta)) - \
+                dtheta * ((dx * math.cos(theta) - dy * math.sin(theta)) - \
+                (x * math.sin(theta) + y * math.cos(theta)) * dtheta)
+    
+        d2h_y = dtheta * (dx * math.cos(theta) - dy * math.sin(theta)) + \
+                dtheta * (dx * math.cos(theta) - dy * math.sin(theta)) - \
+                dtheta**2 * (x * math.sin(theta) + y * math.cos(theta)) + \
+                dtheta * ((dx * math.sin(theta) + dy * math.cos(theta)) + \
+                (x * math.cos(theta) - y * math.sin(theta)) * dtheta)
+    
+        d3h_x = -3 * dtheta * d2h_y - dtheta**3 * h_x
+        d3h_y = 3 * dtheta * d2h_x - dtheta**3 * h_y
+    
+        return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
+    return (math,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -1971,6 +2000,39 @@ def _(mo):
     Implement the corresponding function `T_inv`.
     """
     )
+    return
+
+
+@app.cell
+def _(math):
+    def T_inv(h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y):
+
+  
+    
+        pos_magnitude = math.sqrt(h_x**2 + h_y**2)
+        vel_magnitude = math.sqrt(dh_x**2 + dh_y**2)
+    
+        theta = math.atan2(h_y, h_x)
+    
+ 
+        dtheta = math.sqrt((d3h_x * h_y - d3h_y * h_x) / (3 * (d2h_x * h_y - d2h_y * h_x)))
+    
+
+        if (d3h_x * h_x + d3h_y * h_y) < 0:
+            dtheta = -dtheta
+    
+        x = h_x * math.cos(theta) + h_y * math.sin(theta)
+        y = -h_x * math.sin(theta) + h_y * math.cos(theta)
+    
+    
+        dx = dh_x * math.cos(theta) + dh_y * math.sin(theta) + dtheta * y
+        dy = -dh_x * math.sin(theta) + dh_y * math.cos(theta) - dtheta * x
+    
+    
+        z = -1.0  
+        dz = 0.0  
+    
+        return x, dx, y, dy, theta, dtheta, z, dz
     return
 
 
